@@ -567,8 +567,17 @@ class AliOssAdapter extends AbstractAdapter
      */
     public function getUrl( $path )
     {
-        if (!$this->has($path)) throw new FileNotFoundException($filePath.' not found');
-        return ( $this->ssl ? 'https://' : 'http://' ) . ( $this->isCname ? ( $this->cdnDomain == '' ? $this->endPoint : $this->cdnDomain ) : $this->bucket . '.' . $this->endPoint ) . '/' . ltrim($path, '/');
+        //         if (!$this->has($path)) throw new FileNotFoundException($filePath.' not found');
+//         return ( $this->ssl ? 'https://' : 'http://' ) . ( $this->isCname ? ( $this->cdnDomain == '' ? $this->endPoint : $this->cdnDomain ) : $this->bucket . '.' . $this->endPoint ) . '/' . ltrim($path, '/');
+    	if (!$this->has($path)) {
+    		return '';
+    	}
+    	if($this->getObjectACL($path)==OssClient::OSS_ACL_TYPE_PRIVATE){
+    		$privateurl=$this->client->signUrl($this->bucket, $path);
+    		return $this->ssl?str_replace('http://','https://',$privateurl):$privateurl;
+    	}else if(in_array($this->getObjectACL($path),[AdapterInterface::VISIBILITY_PUBLIC,OssClient::OSS_ACL_TYPE_PUBLIC_READ])){
+    		return ( $this->ssl ? 'https://' : 'http://' ) . ( $this->isCname ? ( $this->cdnDomain == '' ? $this->endPoint : $this->cdnDomain ) : $this->bucket . '.' . $this->endPoint ) . '/' . ltrim($path, '/');
+    	}
     }
 
     /**
